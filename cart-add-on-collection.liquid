@@ -1,0 +1,60 @@
+{% comment %}
+  Replace the text below with the handle of your add-on product.
+{% endcomment %}
+
+{% assign product = all_products['free-with-purchase-2'] %}
+
+{% unless cart.item_count == 0 or product.empty? or product.variants.first.available == false %}
+
+  {% assign variant_id = product.variants.first.id %}
+
+ {% assign found = false %}
+  {% for line_item in cart.items %}
+    {% for collection in line_item.product.collections %}
+      {% if collection.handle == "new-releases" %} // this will allow if product should be from particular collection
+        {% assign found = true %}
+        {% break %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+
+ <script>
+  (function($) {
+    var cartItems = {{ cart.items | json }},
+        qtyInTheCart = 0,
+        cartUpdates = {};
+    for (var i=0; i<cartItems.length; i++) {
+      if ( cartItems[i].id === {{ variant_id }} ) {
+        qtyInTheCart = cartItems[i].quantity;
+        break;
+      }
+    }
+    if ( ( cartItems.length === 1 ) && ( qtyInTheCart > 0 ) ) {
+      cartUpdates = { {{ variant_id }}: 0 }
+    }
+      else if ( ( cartItems.length >= 1 ) && ( qtyInTheCart !== 1 ) && {{found}} == true ) {
+
+     cartUpdates = { {{ variant_id }}: 1 } 
+      
+     
+      
+    }
+    else {
+      return;
+    }
+    var params = {
+      type: 'POST',
+      url: '/cart/update.js',
+      data: { updates: cartUpdates },
+      dataType: 'json',
+      success: function(stuff) { 
+        window.location.href = '/cart';
+      }
+    }; 
+
+    $.ajax(params);
+
+  })(jQuery);
+  </script>
+
+{% endunless %}
